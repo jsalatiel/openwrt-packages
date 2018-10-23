@@ -1,0 +1,67 @@
+diff -urN aria2-1.31.0/src/AbstractCommand.cc aria2-1.31.0.new/src/AbstractCommand.cc
+--- aria2-1.31.0/src/AbstractCommand.cc	2017-01-16 10:35:55.000000000 -0300
++++ aria2-1.31.0.new/src/AbstractCommand.cc	2018-10-23 17:59:21.126806123 -0300
+@@ -767,6 +767,7 @@
+ 
+   e_->findAllCachedIPAddresses(std::back_inserter(addrs), hostname, port);
+   if (!addrs.empty()) {
++    e_->shiftCachedIPAddresses(hostname, port);
+     auto ipaddr = addrs.front();
+     A2_LOG_INFO(fmt(MSG_DNS_CACHE_HIT, getCuid(), hostname.c_str(),
+                     strjoin(std::begin(addrs), std::end(addrs), ", ").c_str()));
+diff -urN aria2-1.31.0/src/DNSCache.h aria2-1.31.0.new/src/DNSCache.h
+--- aria2-1.31.0/src/DNSCache.h	2017-01-16 10:35:55.000000000 -0300
++++ aria2-1.31.0.new/src/DNSCache.h	2018-10-23 17:59:21.126806123 -0300
+@@ -90,6 +90,13 @@
+       }
+     }
+ 
++    void shift()
++    {
++      std::rotate(addrEntries_.begin(),
++                  addrEntries_.begin() + 1,
++                  addrEntries_.end());
++    }
++
+     void markBad(const std::string& addr);
+ 
+     bool operator<(const CacheEntry& e) const;
+@@ -115,13 +122,22 @@
+   void findAll(OutputIterator out, const std::string& hostname,
+                uint16_t port) const
+   {
+-    std::shared_ptr<CacheEntry> target(new CacheEntry(hostname, port));
++    auto target = std::make_shared<CacheEntry>(hostname, port);
+     auto i = entries_.find(target);
+     if (i != entries_.end()) {
+       (*i)->getAllGoodAddrs(out);
+     }
+   }
+ 
++  void shift(const std::string& hostname, uint16_t port) const
++  {
++    auto target = std::make_shared<CacheEntry>(hostname, port);
++    auto i = entries_.find(target);
++    if (i != entries_.end()) {
++      (*i)->shift();
++    }
++  }
++
+   void put(const std::string& hostname, const std::string& ipaddr,
+            uint16_t port);
+ 
+diff -urN aria2-1.31.0/src/DownloadEngine.h aria2-1.31.0.new/src/DownloadEngine.h
+--- aria2-1.31.0/src/DownloadEngine.h	2017-01-16 10:35:55.000000000 -0300
++++ aria2-1.31.0.new/src/DownloadEngine.h	2018-10-23 17:59:21.126806123 -0300
+@@ -310,6 +310,11 @@
+     dnsCache_->findAll(out, hostname, port);
+   }
+ 
++  void shiftCachedIPAddresses(const std::string& hostname, uint16_t port) const
++  {
++    dnsCache_->shift(hostname, port);
++  }
++
+   void cacheIPAddress(const std::string& hostname, const std::string& ipaddr,
+                       uint16_t port);
+ 
