@@ -30,7 +30,7 @@ define Package/nano
   URL:=http://www.nano-editor.org/
   MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>, \
 		Hannu Nyman <hannu.nyman@iki.fi>
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +zlib
 endef
 
 define Package/nano/description
@@ -39,17 +39,20 @@ define Package/nano/description
 endef
 
 CONFIGURE_ARGS += \
-	--enable-tiny \
 	--disable-utf8 \
 	--without-slang \
-	--disable-color \
 
 CONFIGURE_VARS += \
-	ac_cv_header_regex_h=no \
+	ac_cv_header_regex_h=yes \
 
 define Package/nano/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/share/nano/
+	$(CP) files/nano.syntax/* $(1)/usr/share/nano/
+	$(INSTALL_DIR) $(1)/etc/
+	$(INSTALL_CONF) files/nanorc $(1)/etc/nanorc
+
 endef
 
 $(eval $(call BuildPackage,nano))
