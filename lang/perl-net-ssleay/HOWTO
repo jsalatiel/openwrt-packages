@@ -1,0 +1,2 @@
+Precisa setar a variavel abaixo
+export OPENSSL_PREFIX=/data/home/build/openwrt/chaoschalmer/buffalo/build_dir/target-mips_34kc_uClibc-0.9.33.2/openssl-1.0.2j

@@ -1,0 +1,80 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 villy@sft.ru
+
+START=99
+
+USE_PROCD=1
+PROG=/usr/bin/ddclient
+
+start_instance() {
+	local conf="$1"
+	local item
+	local conffile="/var/ddclient-$conf.conf"
+	mkdir -p /var/run /var/cache
+	local pid=/var/run/ddclient-$conf.pid
+	local cache=/var/cache/ddclient-$conf.cache
+
+	config_get_bool item "$conf" enabled 0
+
+	[ $item = 0 ] &&  return 0
+
+	config_get type "$conf" type
+	config_get ip_from "$conf" ip_from
+	config_get proto "$conf" proto
+	config_get server  "$conf" server
+	config_get login  "$conf" login
+	config_get password  "$conf" password
+	config_get daemon "$conf" check_interval
+	config_get maxinterval "$conf" maxinterval
+	config_get syslog "$conf" syslog
+	config_get ssl "$conf" ssl
+	config_get hostnames "$conf" hostnames
+	echo -e "# Section '$conf' from /etc/config/ddclient\n" > $conffile
+	echo '# GLOBAL SECTION #' >> $conffile
+	echo "daemon=$daemon" >> $conffile
+	echo "syslog=$syslog" >> $conffile
+	echo "pid=$pid" >> $conffile
+	echo "cache=$cache" >>$conffile
+	echo "syslog=$syslog" >> $conffile
+	echo "ssl=$ssl" >> $conffile
+	echo "max-interval=$maxinterval" >> $conffile
+
+	echo -e '\n# UPDATE SECTION #' >> $conffile
+
+	echo -en "use=$type," >> $conffile
+	if [ "$type" == "if" ] ; then
+		echo -en " if=$ip_from,\n" >>  $conffile 
+	elif [ "$type" == "web" ] ; then
+		echo -en " web=$ip_from,\n" >>  $conffile 
+	else
+		echo Invalid type
+		exit 0
+	fi
+	echo -en "protocol=$proto,\n" >>  $conffile
+	echo -en "server=$server,\n" >>  $conffile
+	echo -en "protocol=$proto,\n" >>  $conffile
+	echo -en "login=$login,\n" >>  $conffile
+	echo -en "password=$password\n" >>  $conffile
+	echo "$hostnames" >> $conffile
+
+	procd_open_instance
+
+	config_get_bool item "$conf" respawn 0
+	[ $item != 0 ] && procd_set_param respawn
+
+	procd_set_param command $PROG -foreground -file $conffile
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load ddclient
+	config_foreach start_instance daemon
+}
+
+service_triggers() {
+	procd_add_reload_trigger "ddclient"
+}
+
+
+

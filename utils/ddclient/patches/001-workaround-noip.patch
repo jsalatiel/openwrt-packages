@@ -1,0 +1,112 @@
+--- a/ddclient	2017-03-24 10:42:03.000000000 -0300
++++ b/ddclient	2017-03-24 10:57:50.000000000 -0300
+@@ -35,7 +35,8 @@
+ $program  =~ s/d$//;
+ my $now       = time;
+ my $hostname  = hostname();
+-my $etc       = ($program =~ /test/i) ? './'   : '/etc/ddclient/';
++my $singleshot_pid = "/tmp/ddclient_singleshot.pid";
++my $etc       = ($program =~ /test/i) ? './'   : '/etc/';
+ my $cachedir  = ($program =~ /test/i) ? './'   : '/var/cache/ddclient/';
+ my $savedir   = ($program =~ /test/i) ? 'URL/' : '/tmp/';
+ my $msgs      = '';
+@@ -756,15 +757,22 @@
+     open(STDIN,  "</dev/null");
+ }
+ 
++write_pid();
++
+ # write out the pid file if we're daemon'ized
+ if(opt('daemon')) { 
+-    write_pid();
+     $opt{'syslog'} = 1;
+-}
++} 
+ 
+ umask 077;
+ my $daemon;
+ do {
++
++    if ($daemon and &is_running_in_singleshot_mode()) {
++	 warning("delaying current loop update due singleshot pid found");
++	 sleep 30;
++    }
++
+     $now = time;
+     $result = 'OK';
+     %opt = %saved_opt;
+@@ -795,8 +803,8 @@
+ 	my $left = $daemon;
+ 	while (($left > 0) && !$caught_hup && !$caught_term && !$caught_kill) {
+ 		my $delay = $left > 10 ? 10 : $left;
+-
+-		$0 = sprintf("%s - sleeping for %s seconds", $program, $left);
++		$0 = sprintf("%s -file %s - sleeping for %s seconds", $program, (length($opt{'file'}) ? $opt{'file'} : "/etc/ddclient.conf") ,  $left);
++		#$0 = sprintf("%s - sleeping for %s seconds", $program, $left);
+         	$left -= sleep $delay;
+ 		# preventing deep sleep - see [bugs:#46]
+ 		if ($left > $daemon) {
+@@ -876,9 +884,29 @@
+ 				$iplist{$use}{$arg_ip}{$arg_fw}{$arg_if}{$arg_web}{$arg_cmd} = $ip;
+ 			}
+ 			$config{$h}{'wantip'} = $ip;
+-			next if !nic_updateable($h, $updateable);
+-			push @hosts, $h;
+-			$ips{$ip} = $h;
++                        # workaround for no-ip: force update if max-interval reached and ip don't change
++                        if ($config{$h}{'protocol'} eq 'noip') {
++                        	if (nic_updateable($h, $updateable) == 2) {
++                                	my $fakeip = join ('.', (int(172), int(16),int(rand(254)),int(rand(254))));
++                                 	$config{$h}{'wantip'} = $fakeip;
++                                 	warning("workaround for no-ip: IP address set to random ip ". $fakeip);
++                                 	&$update($h);
++                                 	$0 = sprintf("%s - updating %s with fake ip %s", $program, $h, $fakeip);
++                                 	sleep (10);
++                                 	$config{$h}{'wantip'} = $ip;
++                                 	push @hosts, $h;
++                                 	$ips{$ip} = $h;
++                                 	warning("workaround for no-ip: IP address now set to correct ip " . $ip);
++                            	} else {
++                                 	next if !nic_updateable($h, $updateable);
++                                 	push @hosts, $h;
++                                 	$ips{$ip} = $h;
++                            	}
++                        } else {
++                            next if !nic_updateable($h, $updateable);
++                            push @hosts, $h;
++                            $ips{$ip} = $h;
++                        }
+ 		}
+ 		if (@hosts) {
+ 			$0 = sprintf("%s - updating %s", $program, join(',', @hosts));
+@@ -902,6 +930,10 @@
+     if (opt('pid') && opt('daemon')) {	
+ 	unlink opt('pid');
+     }
++    else {	
++	unlink $singleshot_pid
++    }
++
+ }
+ 
+ ######################################################################
+@@ -920,6 +952,19 @@
+ 	    close(FD);
+ 	}
+     }
++    else {
++	unless(open FILE, '>'.$singleshot_pid) {
++     	  die "\nUnable to open $file\n";
++   	} 
++   	close FILE;
++    }
++}
++
++######################################################################
++## check_oneshot()
++######################################################################
++sub is_running_in_singleshot_mode() {
++	return (-e $singleshot_pid)
+ }
+ 
+ ######################################################################

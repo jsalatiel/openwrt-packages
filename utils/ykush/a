@@ -1,0 +1,2 @@
+Makefile:8: /rules.mk: No such file or directory
+Makefile:9: *** unterminated variable reference.  Stop.

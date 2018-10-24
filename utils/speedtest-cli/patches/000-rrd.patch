@@ -1,0 +1,135 @@
+--- a/speedtest_cli.py	2017-03-14 11:46:01.058514869 -0300
++++ b/speedtest_cli.py	2017-03-14 11:51:03.885903121 -0300
+@@ -24,6 +24,9 @@
+ import timeit
+ import platform
+ import threading
++import time
++import datetime
++from time import strftime
+ 
+ __version__ = '0.3.4'
+ 
+@@ -36,6 +39,7 @@
+ 
+ # Used for bound_interface
+ socket_socket = socket.socket
++start_time = int(time.time())
+ 
+ try:
+     import xml.etree.cElementTree as ET
+@@ -424,19 +428,31 @@
+     ]
+     errors = []
+     servers = {}
++    
+     for url in urls:
+         try:
+-            request = build_request(url)
+-            uh, e = catch_request(request)
+-            if e:
+-                errors.append('%s' % e)
+-                raise SpeedtestCliServerListError
++            localfile="/tmp/speedtest-servers.xml"
++            if not os.path.isfile(localfile):
++		try:
++			import urllib
++			urllib.URLopener().retrieve("http://www.speedtest.net/speedtest-servers-static.php", localfile)
++		except Exception,e:
++			print e
++			pass
++            if os.path.isfile(localfile):
++                uh = open(localfile)
++            else:
++                request = build_request(url)
++                uh, e = catch_request(request)
++                if e:
++                    errors.append('%s' % e)
++                    raise SpeedtestCliServerListError
+             serversxml = []
+             while 1:
+                 serversxml.append(uh.read(10240))
+                 if len(serversxml[-1]) == 0:
+                     break
+-            if int(uh.code) != 200:
++            if not os.path.isfile(localfile) and int(uh.code) != 200:
+                 uh.close()
+                 raise SpeedtestCliServerListError
+             uh.close()
+@@ -540,6 +556,12 @@
+     shutdown_event.set()
+     raise SystemExit('\nCancelling...')
+ 
++def term(signum, frame):
++    sys.stdout.write("\n")
++    global shutdown_event
++    shutdown_event.set()
++    sys.exit(1)
++
+ 
+ def version():
+     """Print the version"""
+@@ -554,6 +576,7 @@
+     shutdown_event = threading.Event()
+ 
+     signal.signal(signal.SIGINT, ctrl_c)
++    signal.signal(signal.SIGTERM, term)
+ 
+     description = (
+         'Command line interface for testing internet bandwidth using '
+@@ -579,6 +602,9 @@
+     parser.add_argument('--simple', action='store_true',
+                         help='Suppress verbose output, only show basic '
+                              'information')
++    parser.add_argument('--rrd', action='store_true',
++                        help='Suppress verbose output, only show rrd like '
++                             'information')
+     parser.add_argument('--list', action='store_true',
+                         help='Display a list of speedtest.net servers '
+                              'sorted by distance')
+@@ -617,6 +643,12 @@
+     if args.secure:
+         scheme = 'https'
+ 
++    if args.rrd:
++        args.simple = args.rrd
++	sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
++	sys.stdout.write(strftime("%Y%m%d%H%M") + "," + str(start_time)+",")
++
++
+     if not args.simple:
+         print_('Retrieving speedtest.net configuration...')
+     try:
+@@ -705,6 +737,8 @@
+     if not args.simple:
+         print_(('Hosted by %(sponsor)s (%(name)s) [%(d)0.2f km]: '
+                '%(latency)s ms' % best).encode('utf-8', 'ignore'))
++    elif args.rrd:
++        sys.stdout.write(str(int(best['latency']))+",")
+     else:
+         print_('Ping: %(latency)s ms' % best)
+ 
+@@ -719,8 +753,10 @@
+     dlspeed = downloadSpeed(urls, args.simple)
+     if not args.simple:
+         print_()
+-    print_('Download: %0.2f M%s/s' %
++    	print_('Download: %0.2f M%s/s' %
+            ((dlspeed / 1000 / 1000) * args.units[1], args.units[0]))
++    elif args.rrd:
++        sys.stdout.write(str(int(8*dlspeed/1000)) + str(","))
+ 
+     sizesizes = [int(.25 * 1000 * 1000), int(.5 * 1000 * 1000)]
+     sizes = []
+@@ -732,8 +768,10 @@
+     ulspeed = uploadSpeed(best['url'], sizes, args.simple)
+     if not args.simple:
+         print_()
+-    print_('Upload: %0.2f M%s/s' %
++    	print_('Upload: %0.2f M%s/s' %
+            ((ulspeed / 1000 / 1000) * args.units[1], args.units[0]))
++    elif args.rrd:
++        sys.stdout.write(str(int(8*ulspeed/1000))+"\n")
+ 
+     if args.share and args.mini:
+         print_('Cannot generate a speedtest.net share results image while '

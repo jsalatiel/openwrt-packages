@@ -1,0 +1,30 @@
+--- a/Makefile	2017-03-10 08:32:22.000000000 -0300
++++ b/Makefile	2017-03-10 09:02:58.060673253 -0300
+@@ -1,22 +1,21 @@
+ CUR_PATH = $(shell echo $(PWD))
+ OBJS = $(addprefix ykushcmd/objs/,ykushcmd.o commandParser.o usbcom.o)
+-LIBS = -lhidapi-libusb -lusb-1.0 -ludev
++LIBS = -lhidapi-libusb -lusb-1.0
+ LOADPATHS = -L$(CUR_PATH)/ykushcmd/linux
+ PREPROCESSOR_DEFS = -DLINUX
+-CPP = g++
+ 
+ ykushcmd : $(OBJS)
+-	$(CPP) $(LOADPATHS) -o bin/ykushcmd $(OBJS) $(LIBS)
++	$(CXX) $(LOADPATHS) -o bin/ykushcmd $(OBJS) $(LIBS)
+ 
+ 
+ ykushcmd/objs/ykushcmd.o : ykushcmd/ykushcmd.cpp ykushcmd/commandParser.h
+-	$(CPP) $(PREPROCESSOR_DEFS) -c ykushcmd/ykushcmd.cpp -o ykushcmd/objs/ykushcmd.o
++	$(CXX) $(PREPROCESSOR_DEFS) -c ykushcmd/ykushcmd.cpp -o ykushcmd/objs/ykushcmd.o
+ 
+ ykushcmd/objs/commandParser.o : ykushcmd/commandParser.cpp ykushcmd/commandParser.h ykushcmd/usbcom.h 
+-	$(CPP) $(PREPROCESSOR_DEFS) -c ykushcmd/commandParser.cpp -o ykushcmd/objs/commandParser.o
++	$(CXX) $(PREPROCESSOR_DEFS) -c ykushcmd/commandParser.cpp -o ykushcmd/objs/commandParser.o
+ 
+ ykushcmd/objs/usbcom.o : ykushcmd/usbcom.cpp ykushcmd/linux/hidapi.h ykushcmd/usbcom.h
+-	$(CPP) $(PREPROCESSOR_DEFS) -c ykushcmd/usbcom.cpp -o ykushcmd/objs/usbcom.o
++	$(CXX) $(PREPROCESSOR_DEFS) -c ykushcmd/usbcom.cpp -o ykushcmd/objs/usbcom.o
+ 
+ clean :
+ 	rm -f bin/ykushcmd $(OBJS)

@@ -1,0 +1,37 @@
+--- a/Makefile	2008-11-25 16:41:16.000000000 -0300
++++ b/Makefile	2017-05-06 19:04:28.269221869 -0300
+@@ -1,10 +1,8 @@
+ TGT=noip2
+-CC=gcc
+ PKG=noip-2.1.tgz
+ 
+-PREFIX=/usr/local
+-CONFDIR=${PREFIX}/etc
+-BINDIR=${PREFIX}/bin
++CONFDIR=/etc
++BINDIR=/usr/bin
+ 
+ # these defines are for Linux
+ LIBS=
+@@ -24,21 +22,6 @@
+ ${TGT}: Makefile ${TGT}.c 
+ 	${CC} -Wall -g -D${ARCH} -DPREFIX=\"${PREFIX}\" ${TGT}.c -o ${TGT} ${LIBS}
+ 
+-install: ${TGT} 
+-	if [ ! -d ${BINDIR} ]; then mkdir -p ${BINDIR};fi
+-	if [ ! -d ${CONFDIR} ]; then mkdir -p ${CONFDIR};fi
+-	cp ${TGT} ${BINDIR}/${TGT}
+-	${BINDIR}/${TGT} -C -c /tmp/no-ip2.conf
+-	mv /tmp/no-ip2.conf ${CONFDIR}/no-ip2.conf
+-
+-package: ${TGT}
+-	rm  -f *.bak
+-	mv ${TGT} binaries/${TGT}-`uname -m`
+-	scp a-k:/local/bin/noip2 binaries/noip2-`ssh a-k uname -m`
+-	cd ..; tar zcvf /tmp/${PKG} noip-2.0/*
+-	scp /tmp/${PKG} a-k:/opt/www/${PKG}
+-	rm /tmp/${PKG}
+-
+ clean: 
+ 	rm -f *o
+ 	rm -f binaries/*
