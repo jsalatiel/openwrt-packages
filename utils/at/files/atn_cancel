@@ -1,0 +1,10 @@
+#!/bin/sh
+export PATH=$PATH:/usr/local/bin:/root/bin
+
+if [ $# != 1 ] ; then
+	echo Use $0 IDENTIFIER
+	exit 1
+fi
+
+[ -f /var/spool/named_at/$1 ] && atrm $(cat /var/spool/named_at/$1) ; rm -f "/var/spool/named_at/$1"
+

@@ -1,0 +1,35 @@
+#!/bin/sh
+export PATH=$PATH:/usr/local/bin:/root/bin
+
+if [ $# != 2 ] ; then
+	echo Use $0 DELAY_MINUTES IDENTIFIER
+	exit 1
+fi
+
+mkdir -p /var/spool/named_at
+
+if [ -f "/var/spool/named_at/$2" ] ; then
+        atrm $(cat "/var/spool/named_at/$2")
+        rm -f "/var/spool/named_at/$2" 2>/dev/null
+fi
+
+set -e
+
+if [ "$(($(date +%s) % 60))" -gt 40 ] ; then
+        DELAY=1
+else
+        DELAY=0
+fi 
+
+JOB=/tmp/job$RANDOM
+
+cat | at now + $(($DELAY + $1)) minutes &> $JOB
+
+IDENTIFIER=$(grep job $JOB | awk '{print $2}')
+
+echo $IDENTIFIER > /var/spool/named_at/$2 2>/dev/null
+
+echo Job submitted as $2 \( jobid $IDENTIFIER \)
+
+rm -f $JOB
+
