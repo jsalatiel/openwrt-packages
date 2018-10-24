@@ -30,7 +30,7 @@ define Package/nano
   URL:=http://www.nano-editor.org/
   MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>, \
 		Hannu Nyman <hannu.nyman@iki.fi>
-  DEPENDS:=+libncurses +zlib
+  DEPENDS:=+libncurses +zlib +libmagic
 endef
 
 define Package/nano/description
