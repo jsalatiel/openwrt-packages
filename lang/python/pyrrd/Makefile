@@ -27,7 +27,7 @@ define Package/pyrrd
   CATEGORY:=Languages
   TITLE:=PyRRD - An Object-Oriented Python Interface for RRDTool
   URL:=http://code.google.com/p/pyrrd/
-  DEPENDS:=+python  +rrdtool
+  DEPENDS:=+python  +rrdtool1
 endef
 
 define Package/pyrrd/description
