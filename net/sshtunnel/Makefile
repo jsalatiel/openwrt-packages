@@ -21,7 +21,7 @@ define Package/sshtunnel
   CATEGORY:=Network
   SUBMENU:=SSH
   TITLE:=Manages Local and Remote openssh ssh(1) tunnels
-  DEPENDS:=+openssh-client
+#  DEPENDS:=
 endef
 
 define Package/sshtunnel/description
