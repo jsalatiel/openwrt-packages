@@ -15,6 +15,8 @@ PKG_SOURCE_PROTO:=svn
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
+export OPENSSL_PREFIX=$(shell ls -1d $(BUILD_DIR)/openssl* )
+
 include $(INCLUDE_DIR)/package.mk
 
 include $(TOPDIR)/feeds/packages/lang/perl/perlmod.mk
@@ -33,7 +35,6 @@ define Build/Configure
 endef
 
 define Build/Compile
-#	OPENL=(shell ls -1d $(BUILD_DIR)/openssl*)
 	(sed -i -e "/^LDDLFLAGS/s/'//g" -e "/^CCFLAGS/s/'//g"  $(PKG_BUILD_DIR)/Makefile)
 	$(call perlmod/Compile,,)
 endef
