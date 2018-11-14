@@ -856,7 +856,7 @@ mwan3_set_sticky_iptables()
 
 mwan3_set_user_iptables_rule()
 {
-	local ipset family proto policy src_ip src_port sticky dest_ip dest_port use_policy timeout rule policy IPT
+	local ipset family proto policy src_ip src_port src_iface sticky dest_ip dest_port use_policy timeout rule policy IPT
 
 	rule="$1"
 
@@ -874,6 +874,10 @@ mwan3_set_user_iptables_rule()
 	if [ "$1" != $(echo "$1" | cut -c1-15) ]; then
 		$LOG warn "Rule $1 exceeds max of 15 chars. Not setting rule" && return 0
 	fi
+
+	. /lib/functions/network.sh
+	network_get_ipaddr src_iface $src_ip
+	[ -n "$src_iface" ] && src_ip="$src_iface" && $LOG info Using \'$src_ip\' as source ip for rule $rule.
 
 	if [ -n "$ipset" ]; then
 		ipset="-m set --match-set $ipset dst"

@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=IP Addresses and Names
 	TITLE:=Perl client used to update dynamic DNS
-	DEPENDS:=+perl +perlbase-essential  +perlbase-net +perlbase-sys +perlbase-getopt +perl-carp-clan +perl-date-calc +perl-io-socket-ssl +perl-net-ssleay +perl-xml-simple
+	DEPENDS:=+perl +perlbase-essential  +perlbase-net +perlbase-sys +perlbase-getopt +perl-carp-clan +perl-date-calc +perl-io-socket-ssl +perl-net-ssleay +perl-xml-simple +perlbase-perlio +perlbase-autoloader
 endef
 
 define Package/ddclient/description

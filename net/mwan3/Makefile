@@ -63,6 +63,8 @@ endef
 
 define Package/mwan3/install
 $(CP) ./files/* $(1)
+#shell $(patch -d $(1) -p1 < srciface.patch)
+
 endef
 
 $(eval $(call BuildPackage,mwan3))
