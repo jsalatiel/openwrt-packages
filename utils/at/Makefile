@@ -50,8 +50,8 @@ CONFIGURE_VARS += \
 define Package/at/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/sbin $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/atd.init $(1)/etc/init.d/atd
-	$(INSTALL_BIN) ./files/atn $(1)/etc/init.d/atd
-	$(INSTALL_BIN) ./files/atn_cancel $(1)/etc/init.d/atn-cancel
+	$(INSTALL_BIN) ./files/atn $(1)/usr/bin/atn
+	$(INSTALL_BIN) ./files/atn_cancel $(1)/usr/bin/atn-cancel
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/at $(1)/usr/bin
 	ln -sf at $(1)/usr/bin/atq
 	ln -sf at $(1)/usr/bin/atrm
